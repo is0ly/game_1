@@ -1,3 +1,5 @@
+mod ai;
+mod apple;
 mod game;
 mod game_map;
 mod input;

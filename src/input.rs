@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, poll, read, Event};
+use crossterm::event::{Event, KeyCode, poll, read};
 use std::time::Duration;
 
 #[derive(Debug, PartialEq)]
@@ -16,14 +16,21 @@ pub enum GameAction {
 }
 
 pub fn read_input() -> std::io::Result<Option<GameAction>> {
-    // TODO: Проверить наличие ввода с помощью poll (таймаут 16 мс)
-    // TODO: Считать событие с помощью read
-    // TODO: Для Event::Key преобразовать KeyCode:
-    // - Up/Down/Left/Right -> GameAction::Direction
-    // - Esc/Char('q') -> GameAction::Exit
-    // - Игнорировать другие события
-    // TODO: Вернуть None, если ввода нет
-    unimplemented!()
+    if poll(Duration::from_millis(16))? {
+        match read()? {
+            Event::Key(event) => Ok(match event.code {
+                KeyCode::Up => Some(GameAction::Direction(Direction::Up)),
+                KeyCode::Down => Some(GameAction::Direction(Direction::Down)),
+                KeyCode::Left => Some(GameAction::Direction(Direction::Left)),
+                KeyCode::Right => Some(GameAction::Direction(Direction::Right)),
+                KeyCode::Esc | KeyCode::Char('q') => Some(GameAction::Exit),
+                _ => None,
+            }),
+            _ => Ok(None),
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -31,8 +38,14 @@ mod tests {
     use super::*;
 
     fn key_to_action(key: KeyCode) -> Option<GameAction> {
-        // TODO: Преобразовать KeyCode в GameAction
-        unimplemented!()
+        match key {
+            KeyCode::Up => Some(GameAction::Direction(Direction::Up)),
+            KeyCode::Down => Some(GameAction::Direction(Direction::Down)),
+            KeyCode::Left => Some(GameAction::Direction(Direction::Left)),
+            KeyCode::Right => Some(GameAction::Direction(Direction::Right)),
+            KeyCode::Esc | KeyCode::Char('q') => Some(GameAction::Exit),
+            _ => None,
+        }
     }
 
     #[test]

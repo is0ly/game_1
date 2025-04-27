@@ -5,18 +5,26 @@ use std::io::Result;
 pub struct Player {
     pub x: usize,
     pub y: usize,
+    pub health: i32,
 }
 
 impl Player {
     pub fn new(x: usize, y: usize) -> Self {
-        // TODO: Создать игрока
-        unimplemented!()
+        Player { x, y, health: 3 }
     }
 
     pub fn move_in_direction(&mut self, direction: Direction, map: &GameMap) -> Result<()> {
-        // TODO: Изменить x/y по направлению
-        // TODO: Проверить границы карты
-        unimplemented!()
+        let (new_x, new_y) = match direction {
+            Direction::Up => (self.x, self.y.saturating_sub(1)),
+            Direction::Down => (self.x, self.y + 1),
+            Direction::Left => (self.x.saturating_sub(1), self.y),
+            Direction::Right => (self.x + 1, self.y),
+        };
+        if new_x < map.width && new_y < map.height {
+            self.x = new_x;
+            self.y = new_y;
+        }
+        Ok(())
     }
 }
 

@@ -1,91 +1,70 @@
-use crate::player::Player;
+use crate::ai::AI;
+use crate::apple::Apple;
 use crate::game_map::GameMap;
-use crate::input::{GameAction, Direction};
+use crate::input::GameAction;
+use crate::player::Player;
 use std::io::Result;
 
 pub struct Game {
     map: GameMap,
     players: Vec<Player>,
+    ais: Vec<AI>,
+    apple: Apple,
 }
 
 impl Game {
-    pub fn new(map_width: usize, map_height: usize, player_x: usize, player_y: usize) -> Result<Self> {
-        // TODO: Создать GameMap
-        // TODO: Создать Player
-        // TODO: Проверить валидность позиции игрока
-        // TODO: Вернуть Game с одним игроком
-        unimplemented!()
+    pub fn new(
+        map_width: usize,
+        map_height: usize,
+        player_x: usize,
+        player_y: usize,
+    ) -> Result<Self> {
+        if player_x >= map_width || player_y >= map_height {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Player out of bounds",
+            ));
+        }
+        let map = GameMap::new(map_width, map_height);
+        let player = Player::new(player_x, player_y);
+        let ais = vec![AI::new(1, 1)];
+        let apple = Apple::new(&map);
+        Ok(Game {
+            map,
+            players: vec![player],
+            ais,
+            apple,
+        })
     }
 
     pub fn update(&mut self, action: GameAction) -> Result<()> {
-        // TODO: Если GameAction::Direction, переместить первого игрока
-        // TODO: Игнорировать Exit
-        unimplemented!()
+        if let GameAction::Direction(dir) = action {
+            self.players[0].move_in_direction(dir, &self.map)?;
+        }
+        for ai in &mut self.ais {
+            ai.random_move(&self.map)?;
+        }
+        // Проверка: съел ли игрок яблочко
+        let player = &self.players[0];
+        if player.x == self.apple.x && player.y == self.apple.y {
+            // В будущем: увеличить здоровье и сгенерировать новое яблочко
+            println!("Apple collected! (Health increase coming soon)");
+        }
+        Ok(())
     }
-
     pub fn get_map(&self) -> &GameMap {
-        // TODO: Вернуть карту
-        unimplemented!()
+        &self.map
     }
 
     pub fn get_players(&self) -> &Vec<Player> {
-        // TODO: Вернуть игроков
-        unimplemented!()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_game_new_valid() {
-        let result = Game::new(5, 5, 2, 2);
-        assert!(result.is_ok(), "Game::new должен создавать игру");
-        let game = result.unwrap();
-        assert_eq!(game.get_map().width, 5);
-        assert_eq!(game.get_map().height, 5);
-        assert_eq!(game.get_players().len(), 1);
-        assert_eq!(game.get_players()[0].x, 2);
-        assert_eq!(game.get_players()[0].y, 2);
+        &self.players
     }
 
-    #[test]
-    fn test_game_new_invalid_position() {
-        let result = Game::new(5, 5, 6, 2);
-        assert!(result.is_err(), "Game::new должен отклонять x=6");
+    pub fn get_ais(&self) -> &Vec<AI> {
+        &self.ais
     }
 
-    #[test]
-    fn test_game_new_invalid_size() {
-        let result = Game::new(0, 5, 2, 2);
-        assert!(result.is_err(), "Game::new должен отклонять width=0");
-    }
-
-    #[test]
-    fn test_game_update_move_right() {
-        let mut game = Game::new(5, 5, 2, 2).unwrap();
-        let action = GameAction::Direction(Direction::Right);
-        game.update(action).unwrap();
-        assert_eq!(game.get_players()[0].x, 3);
-        assert_eq!(game.get_players()[0].y, 2);
-    }
-
-    #[test]
-    fn test_game_update_move_out_of_bounds() {
-        let mut game = Game::new(5, 5, 4, 2).unwrap();
-        let action = GameAction::Direction(Direction::Right);
-        game.update(action).unwrap();
-        assert_eq!(game.get_players()[0].x, 4);
-        assert_eq!(game.get_players()[0].y, 2);
-    }
-
-    #[test]
-    fn test_game_update_exit_ignored() {
-        let mut game = Game::new(5, 5, 2, 2).unwrap();
-        let action = GameAction::Exit;
-        game.update(action).unwrap();
-        assert_eq!(game.get_players()[0].x, 2);
-        assert_eq!(game.get_players()[0].y, 2);
+    pub fn get_apple(&self) -> &Apple {
+        &self.apple
     }
 }

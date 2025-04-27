@@ -6,14 +6,17 @@ pub struct GameMap {
 
 impl GameMap {
     pub fn new(width: usize, height: usize) -> Self {
-        // TODO: Создать карту с '.' в клетках
-        // TODO: Проверить width, height > 0
-        unimplemented!()
+        assert!(width > 0 && height > 0, "Width and height must be positive");
+        let tiles = vec![vec!['.'; width]; height];
+        GameMap {
+            width,
+            height,
+            tiles,
+        }
     }
 
     pub fn get_tiles(&self) -> &Vec<Vec<char>> {
-        // TODO: Вернуть tiles
-        unimplemented!()
+        &self.tiles
     }
 }
 
