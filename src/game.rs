@@ -4,12 +4,14 @@ use crate::game_map::GameMap;
 use crate::input::GameAction;
 use crate::player::Player;
 use std::io::Result;
+use std::time::{Duration, Instant};
 
 pub struct Game {
     map: GameMap,
     players: Vec<Player>,
     ais: Vec<AI>,
     apple: Apple,
+    last_ai_move: Instant,
 }
 
 impl Game {
@@ -29,11 +31,13 @@ impl Game {
         let player = Player::new(player_x, player_y);
         let ais = vec![AI::new(1, 1)];
         let apple = Apple::new(&map);
+        let last_ai_move = Instant::now();
         Ok(Game {
             map,
             players: vec![player],
             ais,
             apple,
+            last_ai_move,
         })
     }
 
@@ -41,14 +45,34 @@ impl Game {
         if let GameAction::Direction(dir) = action {
             self.players[0].move_in_direction(dir, &self.map)?;
         }
-        for ai in &mut self.ais {
-            ai.random_move(&self.map)?;
+
+        // ИИ движется независимо от действий игрока, раз в секунду
+        let now = Instant::now();
+        if now.duration_since(self.last_ai_move) >= Duration::from_secs(1) {
+            for ai in &mut self.ais {
+                ai.random_move(&self.map)?;
+            }
+            self.last_ai_move = now;
         }
+
         // Проверка: съел ли игрок яблочко
-        let player = &self.players[0];
+        let player = &mut self.players[0];
         if player.x == self.apple.x && player.y == self.apple.y {
-            // В будущем: увеличить здоровье и сгенерировать новое яблочко
-            println!("Apple collected! (Health increase coming soon)");
+            player.health += 1;
+            self.apple = Apple::new(&self.map);
+        }
+        if self
+            .ais
+            .iter()
+            .any(|ai| ai.x == player.x && ai.y == player.y)
+        {
+            player.health -= 1;
+            if player.health <= 0 {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Game Over: You ran out of health!",
+                ));
+            }
         }
         Ok(())
     }

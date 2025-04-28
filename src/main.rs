@@ -26,6 +26,7 @@ fn main() -> std::io::Result<()> {
     loop {
         // Обработка ввода
         let input = crate::input::read_input()?;
+
         if let Some(GameAction::Exit) = input {
             break;
         }
